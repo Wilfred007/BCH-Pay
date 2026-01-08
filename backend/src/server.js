@@ -11,8 +11,10 @@ dotenv.config();
 // Connect to Database
 connectDB();
 
-// Start Worker (Initial run)
-monitorPayments();
+// Start Worker (Initial run) - Only if not in Vercel
+if (process.env.VERCEL !== '1') {
+    monitorPayments();
+}
 
 const app = express();
 
@@ -38,8 +40,29 @@ app.get('/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date() });
 });
 
+// Vercel Cron Job Endpoint
+app.get('/api/cron/monitor', async (req, res) => {
+    // Optional: Add secret check to prevent unauthorized calls
+    // if (req.headers.authorization !== `Bearer ${process.env.CRON_SECRET}`) {
+    //     return res.status(401).end('Unauthorized');
+    // }
+
+    console.log('Cron job triggered: monitorPayments');
+    try {
+        await monitorPayments();
+        res.status(200).json({ message: 'Monitor payments triggered successfully' });
+    } catch (error) {
+        console.error('Cron job error:', error);
+        res.status(500).json({ error: 'Failed to trigger monitor payments' });
+    }
+});
+
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+    });
+}
+
+module.exports = app;
