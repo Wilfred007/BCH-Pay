@@ -10,10 +10,12 @@ class InvoiceService {
         try {
             // 1. Get BCH price and calculate amount
             const { bchAmount, rate } = await priceService.calculateBCHAmount(amountFiat, currency);
+            console.log(`BCH Amount calculated: ${bchAmount} (Rate: ${rate})`);
 
             // 2. Generate a unique BCH address for this invoice
             // In a production app, you'd derive this from an xPub
             const { address, WIF } = await bchService.generateAddress();
+            console.log(`BCH Address generated: ${address}`);
 
             // 3. Set expiration (e.g., 15 minutes)
             const expiresAt = new Date();
@@ -41,7 +43,11 @@ class InvoiceService {
 
             return invoice;
         } catch (error) {
-            console.error('Error creating invoice:', error);
+            console.error('Error fetching BCH price from CoinGecko:', error.message);
+            if (error.response) {
+                console.error('CoinGecko response status:', error.response.status);
+                console.error('CoinGecko response data:', error.response.data);
+            }
             throw error;
         }
     }

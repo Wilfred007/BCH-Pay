@@ -8,17 +8,34 @@ const Merchant = require('../models/Merchant');
 router.post('/create', async (req, res) => {
     try {
         const { merchantId, amountFiat, currency, items } = req.body;
+        console.log('Creating invoice for merchant:', merchantId, 'Amount:', amountFiat);
+
+        // Validate merchantId format
+        if (!merchantId || !merchantId.match(/^[0-9a-fA-F]{24}$/)) {
+            console.error('Invalid merchantId format:', merchantId);
+            return res.status(400).json({ message: 'Invalid merchantId format' });
+        }
 
         const merchant = await Merchant.findById(merchantId);
-        if (!merchant) return res.status(404).json({ message: 'Merchant not found' });
+        if (!merchant) {
+            console.error('Merchant not found:', merchantId);
+            return res.status(404).json({ message: 'Merchant not found' });
+        }
 
+        console.log('Merchant found, calling invoiceService.createInvoice...');
         const invoice = await invoiceService.createInvoice(merchantId, amountFiat, currency, items);
 
+        console.log('Invoice created successfully:', invoice._id);
         // Notify merchant
-        await notificationService.notifyInvoiceCreated(invoice, merchant.email);
+        try {
+            await notificationService.notifyInvoiceCreated(invoice, merchant.email);
+        } catch (notifyError) {
+            console.error('Error sending notification (non-fatal):', notifyError.message);
+        }
 
         res.status(201).json(invoice);
     } catch (error) {
+        console.error('Error in /api/invoice/create:', error);
         res.status(500).json({ error: error.message });
     }
 });

@@ -10,13 +10,17 @@ class BCHService {
     async generateAddress() {
         try {
             const mnemonic = bchjs.Mnemonic.generate(128);
+            console.log('Mnemonic generated');
             const rootSeed = await bchjs.Mnemonic.toSeed(mnemonic);
+            console.log('Root seed generated');
             const masterHDNode = bchjs.HDNode.fromSeed(rootSeed);
             const account = bchjs.HDNode.derivePath(masterHDNode, "m/44'/1'/0'");
             const node = bchjs.HDNode.derivePath(account, "0/0");
 
             const address = bchaddr.toTestnetAddress(bchjs.HDNode.toCashAddress(node));
+            console.log('Address generated:', address);
             const WIF = bchjs.HDNode.toWIF(node);
+            console.log('WIF generated');
 
             return {
                 address,

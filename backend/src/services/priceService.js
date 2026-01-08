@@ -19,7 +19,11 @@ class PriceService {
 
             return response.data['bitcoin-cash'][currency.toLowerCase()];
         } catch (error) {
-            console.error('Error fetching BCH price:', error);
+            console.error('Error fetching BCH price from CoinGecko:', error.message);
+            if (error.response) {
+                console.error('CoinGecko response status:', error.response.status);
+                console.error('CoinGecko response data:', error.response.data);
+            }
             throw error;
         }
     }
